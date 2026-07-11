@@ -1,0 +1,919 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <base target="_top">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>甲子園2026夏</title>
+<meta name="theme-color" content="#0a0d10">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="甲子園2026夏">
+  <style>
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; }
+  body {
+    background: linear-gradient(180deg, #1a2026 0%, #0b0e11 30%, #06080a 100%);
+    color: #e8ecf1;
+    font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Yu Gothic UI", "Meiryo", sans-serif;
+    line-height: 1.6;
+    padding-bottom: 76px; /* 下タブぶん */
+  }
+  button { font-family: inherit; cursor: pointer; }
+
+  /* ── ヘッダー（スコアボード風） ── */
+  .app-head {
+    position: sticky; top: 0; z-index: 50;
+    background: linear-gradient(180deg, #14181d, #0a0d10);
+    border-bottom: 2px solid #fde047;
+    padding: 10px 14px 8px;
+  }
+  .head-row { display: flex; align-items: center; justify-content: space-between; max-width: 720px; margin: 0 auto; }
+  .app-head h1 { font-size: 1.25rem; font-weight: 900; letter-spacing: .12em; color: #fff; }
+  .head-year { color: #fde047; margin-left: 6px; letter-spacing: .06em; }
+  .head-natsu { color: #f87171; margin-left: 4px; }
+  .refresh-btn {
+    background: #1c232a; border: 1px solid #333d47; color: #e8ecf1;
+    border-radius: 10px; font-size: 1rem; padding: 6px 12px;
+  }
+  .refresh-btn.spin { animation: spin 1s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .data-status {
+    display: none; max-width: 720px; margin: 4px auto 0;
+    font-size: .74rem; color: #9aa7b4;
+  }
+
+  main { max-width: 720px; margin: 0 auto; padding: 14px 12px; }
+
+  /* ── 共通パネル ── */
+  .panel {
+    background: #12161b; border: 1px solid #232b33; border-radius: 14px;
+    padding: 16px 14px; margin-bottom: 14px;
+  }
+  .panel-title { font-size: 1.05rem; font-weight: 800; margin-bottom: 8px; }
+  .panel-note { font-size: .88rem; color: #9aa7b4; }
+  .panel-note strong { color: #fde047; }
+
+  /* ── くじ引き ── */
+  .draw-label { text-align: center; font-size: .9rem; color: #c7d0d9; margin: 14px 0 10px; }
+  .player-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .player-btn {
+    background: #1a222b; border: 1px solid #2c3742; color: #fff;
+    border-radius: 12px; padding: 14px 8px; font-size: 1.05rem; font-weight: 700;
+    display: flex; flex-direction: column; align-items: center; gap: 2px;
+    transition: transform .1s ease;
+  }
+  .player-btn:active { transform: scale(.96); }
+  .player-btn .btn-status { font-size: .72rem; color: #8bd48b; font-weight: 600; }
+  .player-btn.drawn { opacity: .45; cursor: default; }
+  .confirm-box { text-align: center; padding: 10px 0 4px; }
+  .confirm-who { font-size: 1.4rem; font-weight: 900; color: #fde047; }
+  .confirm-note { font-size: .85rem; color: #9aa7b4; margin: 6px 0 12px; }
+  .confirm-btns { display: flex; gap: 10px; justify-content: center; }
+  .btn-main {
+    background: linear-gradient(180deg, #fde047, #eab308); color: #1c1c05;
+    border: none; border-radius: 12px; font-size: 1.02rem; font-weight: 900;
+    padding: 12px 26px; box-shadow: 0 4px 14px rgba(234, 179, 8, .35);
+  }
+  .btn-main:active { transform: scale(.97); }
+  .btn-sub {
+    background: #1a222b; border: 1px solid #2c3742; color: #c7d0d9;
+    border-radius: 12px; font-size: .95rem; padding: 12px 20px;
+  }
+  .loading-msg { text-align: center; color: #fde047; font-weight: 700; padding: 12px 0; }
+  .error-msg {
+    background: #2a1215; border: 1px solid #7f1d1d; color: #fca5a5;
+    border-radius: 10px; padding: 10px 12px; font-size: .86rem; margin-top: 12px;
+  }
+
+  /* ── ガチャモーダル ── */
+  .gacha-modal {
+    display: none; position: fixed; inset: 0; z-index: 100;
+    background: rgba(3, 5, 8, .96); overflow-y: auto;
+  }
+  .gacha-modal.open { display: block; }
+  .gacha-inner { max-width: 560px; margin: 0 auto; padding: 22px 14px 40px; }
+  .gacha-header { text-align: center; font-size: 1.15rem; font-weight: 900; margin-bottom: 4px; }
+  .gacha-hint { text-align: center; font-size: .8rem; color: #9aa7b4; min-height: 1.3em; margin-bottom: 14px; }
+  .gacha-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+
+  .gcard {
+    position: relative; aspect-ratio: 3 / 4; border-radius: 12px;
+    perspective: 700px; opacity: .55;
+  }
+  .gcard.next { opacity: 1; }
+  .gcard.flipped { opacity: 1; }
+  .gcard-in {
+    position: absolute; inset: 0; transform-style: preserve-3d;
+    transition: transform .55s cubic-bezier(.2, .7, .3, 1.1);
+  }
+  .gcard.flipped .gcard-in { transform: rotateY(180deg); }
+  .gface {
+    position: absolute; inset: 0; backface-visibility: hidden;
+    border-radius: 12px; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; text-align: center; padding: 6px;
+  }
+  .gface-back {
+    background: linear-gradient(160deg, #1d2732, #10161c);
+    border: 1px solid #33404d; font-size: 1.8rem; color: #5c6b7a;
+  }
+  .gcard.next .gface-back {
+    border-color: #fde047; color: #fde047;
+    box-shadow: 0 0 14px rgba(253, 224, 71, .35);
+    animation: beckon 1.2s ease-in-out infinite;
+  }
+  @keyframes beckon { 50% { transform: translateY(-3px); } }
+  .gcard.charging .gface-back {
+    border-color: #fde047; color: #fff;
+    animation: charge .18s linear infinite;
+    box-shadow: 0 0 26px rgba(253, 224, 71, .9), 0 0 60px rgba(253, 224, 71, .5);
+  }
+  @keyframes charge {
+    0% { transform: translate(-2px, 1px); } 25% { transform: translate(2px, -1px); }
+    50% { transform: translate(-1px, -2px); } 75% { transform: translate(1px, 2px); }
+    100% { transform: translate(-2px, 1px); }
+  }
+  .gface-front { transform: rotateY(180deg); border: 1px solid #33404d; background: #171e26; }
+  .gface-front .gc-name { font-size: .88rem; font-weight: 800; line-height: 1.25; }
+  .gface-front .gc-pref { font-size: .68rem; color: #9aa7b4; margin-top: 2px; }
+  .gface-front .rb { margin-bottom: 5px; }
+
+  .gcard.rar-ssr .gface-front {
+    border: 2px solid #fde047;
+    background: linear-gradient(160deg, #2b2410, #171307);
+    box-shadow: 0 0 18px rgba(253, 224, 71, .55);
+  }
+  .gcard.rar-sr .gface-front {
+    border: 2px solid #c084fc;
+    background: linear-gradient(160deg, #241a33, #130d1c);
+    box-shadow: 0 0 12px rgba(192, 132, 252, .4);
+  }
+  .gcard.rar-r .gface-front { border: 1px solid #60a5fa; background: linear-gradient(160deg, #16202e, #0e141d); }
+
+  .gacha-close { display: block; margin: 22px auto 0; }
+  .carry-notice {
+    margin-top: 18px; background: #12161b; border: 1px dashed #3a4652;
+    border-radius: 12px; padding: 12px;
+  }
+  .carry-title { font-weight: 800; font-size: .9rem; margin-bottom: 6px; }
+  .carry-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .carry-note { font-size: .74rem; color: #9aa7b4; margin-top: 6px; }
+
+  /* ── レア度バッジ ── */
+  .rb {
+    display: inline-block; font-size: .62rem; font-weight: 900;
+    border-radius: 6px; padding: 1px 7px; letter-spacing: .05em;
+  }
+  .rb-ssr { background: linear-gradient(90deg, #fde047, #f59e0b); color: #201a02; }
+  .rb-sr  { background: #a855f7; color: #fff; }
+  .rb-r   { background: #3b82f6; color: #fff; }
+  .rb-n   { background: #2b333c; color: #93a1af; }
+
+  /* ── 凡例 ── */
+  .legend { display: flex; flex-wrap: wrap; gap: 8px 12px; margin-bottom: 12px; }
+  .legend-item { display: flex; align-items: center; gap: 5px; font-size: .78rem; color: #c7d0d9; }
+  .legend-dot { width: 10px; height: 10px; border-radius: 3px; flex: none; }
+
+  /* ── ブラケット（3回戦までの山） ── */
+  .bk-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; margin: 0 -12px; padding: 0 12px; }
+  .bk-tree { position: relative; display: flex; gap: 34px; width: max-content; padding: 6px 8px 18px; }
+  .bk-svg { position: absolute; inset: 0; pointer-events: none; z-index: 0; }
+  .bk-col { display: flex; flex-direction: column; gap: 10px; z-index: 1; width: 168px; }
+  .bk-col.spread { justify-content: space-around; }
+  .bk-col-title {
+    text-align: center; font-size: .78rem; font-weight: 800; color: #fde047;
+    letter-spacing: .1em; margin-bottom: 2px;
+  }
+
+  .match {
+    background: #12161b; border: 1px solid #232b33; border-radius: 10px;
+    overflow: hidden; font-size: .8rem;
+  }
+  .match-meta { font-size: .62rem; color: #7b8894; padding: 3px 8px 0; }
+  .mrow { display: flex; align-items: center; gap: 6px; padding: 4px 8px; }
+  .mrow + .mrow { border-top: 1px solid #1c232a; }
+  .mrow .obar { width: 4px; align-self: stretch; border-radius: 2px; flex: none; }
+  .mrow .mname { flex: 1; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .mrow .mpref { font-size: .62rem; color: #7b8894; flex: none; }
+  .mrow .mscore { font-weight: 900; font-size: .92rem; width: 1.6em; text-align: right; flex: none; }
+  .mrow.loser .mname, .mrow.loser .mscore { color: #5c6b7a; }
+  .mrow.winner .mscore { color: #fde047; }
+  .mrow.tbd .mname { color: #5c6b7a; font-weight: 500; font-size: .72rem; }
+
+  /* ── 終盤（準々決勝以降のカード） ── */
+  .finals-sec { margin-top: 18px; }
+  .finals-title { font-size: .9rem; font-weight: 800; color: #fde047; letter-spacing: .08em; margin-bottom: 8px; }
+  .finals-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .finals-grid.single { grid-template-columns: 1fr; max-width: 340px; }
+  .finals-wait { font-size: .78rem; color: #7b8894; background: #10141a; border: 1px dashed #2c3742; border-radius: 10px; padding: 10px 12px; }
+
+  /* ── 持ち校一覧 ── */
+  .champ-banner {
+    background: linear-gradient(160deg, #2b2410, #171307); border: 2px solid #fde047;
+    border-radius: 14px; padding: 14px; text-align: center; margin-bottom: 14px;
+    font-weight: 900; font-size: 1.05rem;
+  }
+  .champ-banner .champ-sub { display: block; font-size: .78rem; color: #c9b45a; font-weight: 600; margin-top: 2px; }
+  .mine-card {
+    background: #12161b; border: 1px solid #232b33; border-radius: 14px;
+    padding: 12px 12px 10px; margin-bottom: 12px;
+  }
+  .mine-card.me { border-color: #fde047; }
+  .mine-head { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+  .mine-dot { width: 12px; height: 12px; border-radius: 4px; flex: none; }
+  .mine-name { font-weight: 900; font-size: 1rem; }
+  .mine-me-badge { font-size: .62rem; background: #fde047; color: #201a02; font-weight: 900; border-radius: 6px; padding: 1px 6px; }
+  .mine-alive { margin-left: auto; font-size: .78rem; color: #9aa7b4; }
+  .mine-alive strong { color: #fde047; font-size: .95rem; }
+  .school-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .schip {
+    display: inline-flex; align-items: center; gap: 5px;
+    background: #1a222b; border: 1px solid #2c3742; border-radius: 8px;
+    padding: 3px 8px; font-size: .78rem; font-weight: 700;
+  }
+  .schip .schip-pref { font-size: .62rem; color: #7b8894; font-weight: 500; }
+  .schip.out { opacity: .42; }
+  .schip.out .schip-name { text-decoration: line-through; }
+  .mine-empty { font-size: .8rem; color: #7b8894; }
+
+  /* ── 下タブ ── */
+  .tab-bar {
+    position: fixed; left: 0; right: 0; bottom: 0; z-index: 60;
+    display: flex; background: #0c0f13; border-top: 1px solid #232b33;
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  .tab-btn {
+    flex: 1; background: none; border: none; color: #7b8894;
+    font-size: .72rem; font-weight: 700; padding: 8px 0 9px;
+    display: flex; flex-direction: column; align-items: center; gap: 1px;
+  }
+  .tab-btn .tab-ico { font-size: 1.15rem; }
+  .tab-btn.active { color: #fde047; }
+</style>
+
+</head>
+<body>
+
+  <header class="app-head">
+    <div class="head-row">
+      <h1>甲子園<span class="head-year">2026</span><span class="head-natsu">夏</span></h1>
+      <button id="refreshBtn" class="refresh-btn" onclick="onRefresh()" title="最新に更新">🔄</button>
+    </div>
+    <div id="data-status" class="data-status"></div>
+  </header>
+
+  <main id="content">
+
+    <!-- くじ引きタブ -->
+    <section id="tab-draw" class="tab-page">
+      <div class="panel">
+        <div class="panel-title">🎟️ 学校くじ引き</div>
+        <p class="panel-note">49代表校から<strong>9校</strong>を引きます。引き直しはできません。<br>残り <span id="remainingNum">--</span> 校</p>
+        <div id="drawCardLabel" class="draw-label">名前をタップしてください</div>
+        <div id="playerBtns" class="player-grid"></div>
+        <div id="confirmSection" class="confirm-box" style="display:none;">
+          <div id="confirmWho" class="confirm-who"></div>
+          <p class="confirm-note">この名前でくじを引きます。よろしいですか？</p>
+          <div class="confirm-btns">
+            <button class="btn-sub" onclick="onCancelDraw()">やめる</button>
+            <button class="btn-main" onclick="onConfirmDraw()">くじを引く！</button>
+          </div>
+        </div>
+        <div id="loadingMsg" class="loading-msg" style="display:none;">⚾ 抽選中…</div>
+        <div id="errorMsg" class="error-msg" style="display:none;"></div>
+      </div>
+    </section>
+
+    <!-- トーナメントタブ -->
+    <section id="tab-bracket" class="tab-page" style="display:none;">
+      <div id="bkLegend" class="legend"></div>
+      <div id="bkEmpty" class="panel panel-note" style="display:none;">組み合わせ抽選（例年8月頭）のあとに表示されます</div>
+      <div id="bkScroll" class="bk-scroll">
+        <div id="bkTree" class="bk-tree">
+          <svg id="bkSvg" class="bk-svg"></svg>
+        </div>
+      </div>
+      <div id="bkFinals"></div>
+    </section>
+
+    <!-- 持ち校一覧タブ -->
+    <section id="tab-mine" class="tab-page" style="display:none;">
+      <div id="mineChampion"></div>
+      <div id="mineList"></div>
+    </section>
+
+  </main>
+
+  <nav class="tab-bar">
+    <button id="tabbtn-draw" class="tab-btn active" onclick="showTab('draw')"><span class="tab-ico">🎟️</span>くじ引き</button>
+    <button id="tabbtn-bracket" class="tab-btn" onclick="showTab('bracket')"><span class="tab-ico">🏆</span>トーナメント</button>
+    <button id="tabbtn-mine" class="tab-btn" onclick="showTab('mine')"><span class="tab-ico">📋</span>持ち校</button>
+  </nav>
+
+  <!-- ガチャモーダル -->
+  <div id="gachaModal" class="gacha-modal">
+    <div class="gacha-inner">
+      <div id="gachaHeader" class="gacha-header"></div>
+      <div id="gachaHint" class="gacha-hint"></div>
+      <div id="gachaGrid" class="gacha-grid"></div>
+      <div id="gachaCarry"></div>
+      <button id="gachaCloseBtn" class="btn-main gacha-close" style="display:none;" onclick="closeGacha()">とじる</button>
+    </div>
+  </div>
+
+  <script>
+// メンバーと色（ブラケット・持ち校一覧の色分けに使う）
+var MEMBERS = ['あさひ', 'しょーじ', 'たくと', 'ひろかず', 'なおと'];
+var CARRY = 'キャリー';
+var OWNER_COLORS = {
+  'あさひ':   '#3b82f6',
+  'しょーじ': '#ef4444',
+  'たくと':   '#22c55e',
+  'ひろかず': '#f59e0b',
+  'なおと':   '#a855f7',
+  'キャリー': '#64748b'
+};
+var ROUNDS = ['1回戦', '2回戦', '3回戦', '準々決勝', '準決勝', '決勝'];
+var RARITY_ORDER = { 'SSR': 0, 'SR': 1, 'R': 2, 'N': 3 };
+
+function rarityBadge(r) {
+  if (r === 'SSR') return '<span class="rb rb-ssr">★SSR</span>';
+  if (r === 'SR')  return '<span class="rb rb-sr">★SR</span>';
+  if (r === 'R')   return '<span class="rb rb-r">◆R</span>';
+  return '<span class="rb rb-n">N</span>';
+}
+
+function ownerColor(owner) {
+  return OWNER_COLORS[owner] || '#334155';
+}
+
+function h(s) {
+  return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+</script>
+
+  <script>
+// ────────────────────────────────────────────────
+// API呼び出し共通ヘルパー（1ソース2環境）
+//   GAS版（身内URL直アクセス）: google.script.run を使う
+//   PWA版（GitHub Pages）     : fetch → GASのJSON API を使う
+// GAS_API_URL はビルド.ps1 が実URLに置換する。空のままならGAS版として動く。
+// ────────────────────────────────────────────────
+var GAS_API_URL = 'https://script.google.com/macros/s/AKfycbxOxbTP3q8yFZFWRCvnvXxlmtOKZv7GAAQLNgvh--JuE-K7ISsRrAcULN5ZRs1pNVHshw/exec';
+
+function apiCall(action, params, onSuccess, onFailure) {
+  if (!GAS_API_URL) {
+    var runner = google.script.run
+      .withSuccessHandler(onSuccess)
+      .withFailureHandler(onFailure);
+    if (action === 'state') runner.getState();
+    else if (action === 'draw') runner.drawSchools(params.player);
+    else onFailure(new Error('不明なaction: ' + action));
+    return;
+  }
+  var qs = 'action=' + encodeURIComponent(action);
+  if (params) {
+    for (var k in params) qs += '&' + k + '=' + encodeURIComponent(params[k]);
+  }
+  fetch(GAS_API_URL + '?' + qs)
+    .then(function(r) {
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      return r.json();
+    })
+    .then(function(d) {
+      if (d && d.__error) throw new Error(d.__error);
+      onSuccess(d);
+    })
+    .catch(function(e) { onFailure(e); });
+}
+
+// 前回データのキャッシュ（localStorage）。起動時に即表示し、裏で最新に差し替える
+function saveCache(name, data) {
+  try {
+    localStorage.setItem('koshien2026_cache_' + name, JSON.stringify({ t: Date.now(), d: data }));
+  } catch (e) {}
+}
+
+function loadCache(name) {
+  try {
+    var raw = localStorage.getItem('koshien2026_cache_' + name);
+    return raw ? JSON.parse(raw) : null;
+  } catch (e) { return null; }
+}
+
+function fmtCacheTime(t) {
+  var d = new Date(t);
+  return (d.getMonth() + 1) + '/' + d.getDate() + ' ' + d.getHours() + ':' + ('0' + d.getMinutes()).slice(-2);
+}
+
+// ヘッダー下の小さいステータス表示（オフライン時など）。空文字で非表示
+function setDataStatus(text) {
+  var el = document.getElementById('data-status');
+  if (!el) return;
+  el.textContent = text || '';
+  el.style.display = text ? 'block' : 'none';
+}
+</script>
+
+  <script>
+// ────────────────────────────────────────────────
+// くじ引きタブ：名前選択 → 確認 → 抽選 → 1枚ずつタップでめくる
+// ────────────────────────────────────────────────
+var pendingName = '';
+var gachaTeams = [];
+var gachaCarried = [];
+var gachaNext = 0;
+
+function renderDraw() {
+  var st = APP.state;
+  if (!st) return;
+  document.getElementById('remainingNum').textContent = st.remaining;
+  renderPlayerButtons();
+}
+
+function renderPlayerButtons() {
+  var st = APP.state;
+  document.getElementById('playerBtns').style.display = 'grid';
+  document.getElementById('confirmSection').style.display = 'none';
+  document.getElementById('drawCardLabel').textContent = '名前をタップしてください';
+  pendingName = '';
+
+  var grid = document.getElementById('playerBtns');
+  grid.innerHTML = MEMBERS.map(function(name) {
+    var drew = st && st.drawn && st.drawn[name];
+    if (drew) {
+      return '<button class="player-btn drawn" disabled>'
+        + '<span class="btn-name">' + h(name) + '</span>'
+        + '<span class="btn-status">引き済み ✓</span>'
+        + '</button>';
+    }
+    return '<button class="player-btn" onclick="onPlayerClick(' + h(JSON.stringify(name)) + ')">'
+      + '<span class="btn-name">' + h(name) + '</span>'
+      + '</button>';
+  }).join('');
+}
+
+function onPlayerClick(name) {
+  pendingName = name;
+  document.getElementById('playerBtns').style.display = 'none';
+  document.getElementById('drawCardLabel').textContent = '';
+  document.getElementById('confirmWho').textContent = name;
+  document.getElementById('confirmSection').style.display = 'block';
+  hideError();
+}
+
+function onCancelDraw() {
+  renderPlayerButtons();
+  hideError();
+}
+
+function onConfirmDraw() {
+  if (!pendingName) return;
+  var name = pendingName;
+  pendingName = '';
+  document.getElementById('confirmSection').style.display = 'none';
+  setLoading(true);
+  hideError();
+  apiCall('draw', { player: name }, function(r) {
+    setLoading(false);
+    handleDrawResult(name, r);
+  }, function() {
+    setLoading(false);
+    renderPlayerButtons();
+    showError('通信エラーが発生しました。もう一度試してください。');
+  });
+}
+
+function handleDrawResult(name, r) {
+  if (r.alreadyDrew) {
+    showError(r.message);
+    renderPlayerButtons();
+    refreshState();
+    return;
+  }
+  if (!r.ok) {
+    showError(r.message || 'エラーが発生しました');
+    renderPlayerButtons();
+    refreshState();
+    return;
+  }
+  hideError();
+  try { localStorage.setItem('koshien2026_me', name); } catch (e) {}
+  openGacha(r.player, r.teams, r.carried || []);
+  refreshState();
+}
+
+// ── ガチャ演出 ──────────────────────────────
+function openGacha(name, teams, carried) {
+  gachaTeams = teams;
+  gachaCarried = carried;
+  gachaNext = 0;
+  window.scrollTo(0, 0);
+
+  document.getElementById('gachaHeader').textContent = name + 'の9校';
+  document.getElementById('gachaHint').textContent = '光っているカードをタップ！';
+  document.getElementById('gachaCarry').innerHTML = '';
+  document.getElementById('gachaCloseBtn').style.display = 'none';
+
+  var grid = document.getElementById('gachaGrid');
+  grid.innerHTML = teams.map(function(_, i) {
+    return '<div class="gcard" id="gcard-' + i + '" onclick="onCardTap(' + i + ')">'
+      + '<div class="gcard-in">'
+      + '<div class="gface gface-back">⚾</div>'
+      + '<div class="gface gface-front"></div>'
+      + '</div></div>';
+  }).join('');
+  document.getElementById('gachaModal').classList.add('open');
+  markNextCard();
+}
+
+function markNextCard() {
+  for (var i = 0; i < gachaTeams.length; i++) {
+    var el = document.getElementById('gcard-' + i);
+    el.classList.toggle('next', i === gachaNext);
+  }
+}
+
+function onCardTap(i) {
+  if (i !== gachaNext) return;
+  var card = document.getElementById('gcard-' + i);
+  if (card.classList.contains('flipped') || card.classList.contains('charging')) return;
+
+  var t = gachaTeams[i];
+  card.classList.remove('next');
+
+  if (t.rarity === 'SSR') {
+    // 溜め演出 → 金フラッシュ → 開示
+    card.classList.add('charging');
+    if (navigator.vibrate) navigator.vibrate([60, 40, 60, 40, 60]);
+    setTimeout(function() {
+      card.classList.remove('charging');
+      goldFlash();
+      if (navigator.vibrate) navigator.vibrate([120, 60, 260, 60, 500]);
+      revealCard(i);
+    }, 1400);
+  } else {
+    if (t.rarity === 'SR' && navigator.vibrate) navigator.vibrate([80, 40, 160]);
+    revealCard(i);
+  }
+}
+
+function revealCard(i) {
+  var t = gachaTeams[i];
+  var card = document.getElementById('gcard-' + i);
+  var front = card.querySelector('.gface-front');
+  front.innerHTML = rarityBadge(t.rarity)
+    + '<div class="gc-name">' + h(t.name) + '</div>'
+    + '<div class="gc-pref">' + h(t.pref) + '</div>';
+  card.classList.add('flipped', 'rar-' + String(t.rarity).toLowerCase());
+
+  gachaNext++;
+  if (gachaNext < gachaTeams.length) {
+    markNextCard();
+  } else {
+    document.getElementById('gachaHint').textContent = '';
+    finishGacha();
+  }
+}
+
+function finishGacha() {
+  if (gachaCarried.length > 0) {
+    var chips = gachaCarried.map(function(t) {
+      return '<span class="schip">' + rarityBadge(t.rarity) + '<span class="schip-name">' + h(t.name) + '</span>'
+        + '<span class="schip-pref">' + h(t.pref) + '</span></span>';
+    }).join('');
+    document.getElementById('gachaCarry').innerHTML =
+      '<div class="carry-notice">'
+      + '<div class="carry-title">🏳️ キャリー（引き手なし）の' + gachaCarried.length + '校</div>'
+      + '<div class="carry-chips">' + chips + '</div>'
+      + '<div class="carry-note">キャリー校が優勝した場合は全員負けです</div>'
+      + '</div>';
+  }
+  setTimeout(function() {
+    document.getElementById('gachaCloseBtn').style.display = 'block';
+  }, 800);
+}
+
+function goldFlash() {
+  var el = document.createElement('div');
+  el.style.cssText = 'position:fixed;inset:0;background:rgba(253,224,71,0.6);pointer-events:none;z-index:9999;opacity:1;transition:opacity 0.7s ease;';
+  document.body.appendChild(el);
+  setTimeout(function() { el.style.opacity = '0'; }, 80);
+  setTimeout(function() { el.remove(); }, 820);
+}
+
+function closeGacha() {
+  document.getElementById('gachaModal').classList.remove('open');
+  showTab('mine');
+}
+
+function setLoading(on) {
+  document.getElementById('loadingMsg').style.display = on ? 'block' : 'none';
+}
+function showError(msg) {
+  var el = document.getElementById('errorMsg');
+  el.textContent = msg; el.style.display = 'block';
+}
+function hideError() { document.getElementById('errorMsg').style.display = 'none'; }
+</script>
+
+  <script>
+// ────────────────────────────────────────────────
+// トーナメントタブ
+//  ・3回戦までは山型ツリー（横スクロール＋SVGの連結線）
+//  ・準々決勝以降は抽選確定後にカード表示（再抽選制度のため）
+//  ・校1/校2の「勝者N」は第N試合の勝者枠。勝者確定で校名に解決する
+// ────────────────────────────────────────────────
+var bkLinks = [];
+
+function teamInfo(name) {
+  var st = APP.state;
+  if (!st) return null;
+  for (var i = 0; i < st.teams.length; i++) {
+    if (st.teams[i].name === name) return st.teams[i];
+  }
+  return null;
+}
+
+function matchByNo(no) {
+  var ms = APP.state.matches;
+  for (var i = 0; i < ms.length; i++) {
+    if (String(ms[i].no) === String(no)) return ms[i];
+  }
+  return null;
+}
+
+// 「勝者N」を解決する。戻り値 {name, pref, owner, tbd, from}
+function resolveSlot(t) {
+  var m = String(t).match(/^勝者(\d+)$/);
+  if (!m) {
+    var info = teamInfo(t);
+    return { name: t, pref: info ? info.pref : '', owner: info ? info.owner : '' };
+  }
+  var from = parseInt(m[1], 10);
+  var src = matchByNo(from);
+  if (src && src.winner) {
+    var info2 = teamInfo(src.winner);
+    return { name: src.winner, pref: info2 ? info2.pref : '', owner: info2 ? info2.owner : '', from: from };
+  }
+  return { tbd: '第' + from + '試合の勝者', from: from };
+}
+
+function slotRowHtml(slot, score, isWinner, hasResult) {
+  if (slot.tbd) {
+    return '<div class="mrow tbd"><span class="obar" style="background:#2c3742"></span>'
+      + '<span class="mname">' + h(slot.tbd) + '</span></div>';
+  }
+  var cls = 'mrow';
+  if (hasResult) cls += isWinner ? ' winner' : ' loser';
+  return '<div class="' + cls + '">'
+    + '<span class="obar" style="background:' + ownerColor(slot.owner) + '"></span>'
+    + '<span class="mname">' + h(slot.name) + '</span>'
+    + '<span class="mpref">' + h(slot.pref || '') + '</span>'
+    + '<span class="mscore">' + (score === null || score === undefined || score === '' ? '' : h(score)) + '</span>'
+    + '</div>';
+}
+
+function matchCardHtml(m, collectLinks) {
+  var s1 = resolveSlot(m.t1);
+  var s2 = resolveSlot(m.t2);
+  if (collectLinks) {
+    if (s1.from) bkLinks.push({ from: s1.from, to: m.no });
+    if (s2.from) bkLinks.push({ from: s2.from, to: m.no });
+  }
+  var hasResult = !!m.winner;
+  var meta = '第' + h(m.no) + '試合' + (m.date ? '・' + h(m.date) : '');
+  return '<div class="match" id="mk-' + h(m.no) + '">'
+    + '<div class="match-meta">' + meta + '</div>'
+    + slotRowHtml(s1, m.s1, hasResult && m.winner === s1.name, hasResult)
+    + slotRowHtml(s2, m.s2, hasResult && m.winner === s2.name, hasResult)
+    + '</div>';
+}
+
+function renderBracket() {
+  var st = APP.state;
+  if (!st) return;
+
+  // 凡例
+  var names = MEMBERS.concat([CARRY]);
+  document.getElementById('bkLegend').innerHTML = names.map(function(n) {
+    return '<span class="legend-item"><span class="legend-dot" style="background:' + ownerColor(n) + '"></span>' + h(n) + '</span>';
+  }).join('');
+
+  var hasAny = st.matches.length > 0;
+  document.getElementById('bkEmpty').style.display = hasAny ? 'none' : 'block';
+  document.getElementById('bkScroll').style.display = hasAny ? 'block' : 'none';
+  document.getElementById('bkFinals').style.display = hasAny ? 'block' : 'none';
+  if (!hasAny) return;
+
+  bkLinks = [];
+
+  // 3回戦までの山
+  var tree = document.getElementById('bkTree');
+  var cols = '';
+  ['1回戦', '2回戦', '3回戦'].forEach(function(round, ri) {
+    var ms = st.matches.filter(function(m) { return m.round === round; });
+    if (!ms.length) return;
+    cols += '<div class="bk-col' + (ri > 0 ? ' spread' : '') + '">'
+      + '<div class="bk-col-title">' + h(round) + '</div>'
+      + ms.map(function(m) { return matchCardHtml(m, true); }).join('')
+      + '</div>';
+  });
+  tree.innerHTML = '<svg id="bkSvg" class="bk-svg"></svg>' + cols;
+
+  // 準々決勝以降（抽選確定後にカード追加）
+  var finals = [
+    { round: '準々決勝', wait: '3回戦終了後の抽選で組み合わせが決まります' },
+    { round: '準決勝',   wait: '準々決勝終了後の抽選で組み合わせが決まります' },
+    { round: '決勝',     wait: '準決勝の結果を待っています' }
+  ];
+  document.getElementById('bkFinals').innerHTML = finals.map(function(f) {
+    var ms = st.matches.filter(function(m) { return m.round === f.round; });
+    var body = ms.length
+      ? '<div class="finals-grid' + (ms.length === 1 ? ' single' : '') + '">'
+        + ms.map(function(m) { return matchCardHtml(m, false); }).join('') + '</div>'
+      : '<div class="finals-wait">' + h(f.wait) + '</div>';
+    return '<div class="finals-sec"><div class="finals-title">' + h(f.round) + '</div>' + body + '</div>';
+  }).join('');
+
+  requestAnimationFrame(drawConnectors);
+}
+
+// カード位置を測ってSVGで連結線を引く（.bk-tree が offsetParent になる）
+function drawConnectors() {
+  var svg = document.getElementById('bkSvg');
+  var tree = document.getElementById('bkTree');
+  if (!svg || !tree) return;
+  svg.setAttribute('width', tree.scrollWidth);
+  svg.setAttribute('height', tree.scrollHeight);
+
+  var paths = '';
+  bkLinks.forEach(function(l) {
+    var a = document.getElementById('mk-' + l.from);
+    var b = document.getElementById('mk-' + l.to);
+    if (!a || !b) return;
+    var x1 = a.offsetLeft + a.offsetWidth;
+    var y1 = a.offsetTop + a.offsetHeight / 2;
+    var x2 = b.offsetLeft;
+    var y2 = b.offsetTop + b.offsetHeight / 2;
+    var mx = (x1 + x2) / 2;
+    paths += '<path d="M' + x1 + ' ' + y1 + ' C' + mx + ' ' + y1 + ',' + mx + ' ' + y2 + ',' + x2 + ' ' + y2
+      + '" stroke="#39444f" stroke-width="2" fill="none"/>';
+  });
+  svg.innerHTML = paths;
+}
+</script>
+
+  <script>
+// ────────────────────────────────────────────────
+// 持ち校一覧タブ：メンバーごとの9校＋キャリー4校、敗退グレーアウト、
+// 勝ち残り校数サマリー、優勝バナー（キャリー優勝＝全員負け）
+// ────────────────────────────────────────────────
+
+function renderMine() {
+  var st = APP.state;
+  if (!st) return;
+
+  // 敗退校の集合（勝者が入った試合の負け側）
+  var out = {};
+  st.matches.forEach(function(m) {
+    if (!m.winner) return;
+    var loser = (m.winner === m.t1) ? m.t2 : (m.winner === m.t2 ? m.t1 : '');
+    if (loser && !/^勝者\d+$/.test(loser)) out[loser] = true;
+  });
+
+  // 優勝バナー
+  var champEl = document.getElementById('mineChampion');
+  var final_ = st.matches.filter(function(m) { return m.round === '決勝' && m.winner; })[0];
+  if (final_) {
+    var info = teamInfo(final_.winner);
+    var owner = info ? info.owner : '';
+    if (owner === CARRY) {
+      champEl.innerHTML = '<div class="champ-banner">🏳️ 優勝：' + h(final_.winner)
+        + '<span class="champ-sub">キャリー校の優勝…全員負け！</span></div>';
+    } else {
+      champEl.innerHTML = '<div class="champ-banner">🏆 優勝：' + h(final_.winner)
+        + '<span class="champ-sub">' + h(owner || '？') + 'の総取り！</span></div>';
+    }
+  } else {
+    champEl.innerHTML = '';
+  }
+
+  // メンバーごとの持ち校
+  var byOwner = {};
+  st.teams.forEach(function(t) {
+    if (!t.owner) return;
+    (byOwner[t.owner] = byOwner[t.owner] || []).push(t);
+  });
+
+  var me = '';
+  try { me = localStorage.getItem('koshien2026_me') || ''; } catch (e) {}
+
+  var names = MEMBERS.concat([CARRY]);
+  document.getElementById('mineList').innerHTML = names.map(function(name) {
+    var teams = byOwner[name] || [];
+    var isMe = name === me;
+    var head = '<div class="mine-head">'
+      + '<span class="mine-dot" style="background:' + ownerColor(name) + '"></span>'
+      + '<span class="mine-name">' + h(name) + '</span>'
+      + (isMe ? '<span class="mine-me-badge">あなた</span>' : '');
+
+    if (!teams.length) {
+      var note = (name === CARRY) ? '5人が引き終わると残り4校が入ります' : 'まだ引いていません';
+      return '<div class="mine-card' + (isMe ? ' me' : '') + '">' + head + '</div>'
+        + '<div class="mine-empty">' + note + '</div></div>';
+    }
+
+    teams.sort(function(a, b) {
+      var d = (RARITY_ORDER[a.rarity] || 9) - (RARITY_ORDER[b.rarity] || 9);
+      return d !== 0 ? d : String(a.pref).localeCompare(String(b.pref), 'ja');
+    });
+    var alive = teams.filter(function(t) { return !out[t.name]; }).length;
+    head += '<span class="mine-alive">勝ち残り <strong>' + alive + '</strong> / ' + teams.length + '校</span></div>';
+
+    var chips = teams.map(function(t) {
+      return '<span class="schip' + (out[t.name] ? ' out' : '') + '">'
+        + rarityBadge(t.rarity)
+        + '<span class="schip-name">' + h(t.name) + '</span>'
+        + '<span class="schip-pref">' + h(t.pref) + '</span>'
+        + '</span>';
+    }).join('');
+
+    return '<div class="mine-card' + (isMe ? ' me' : '') + '">' + head
+      + '<div class="school-chips">' + chips + '</div></div>';
+  }).join('');
+}
+</script>
+
+  <script>
+// ────────────────────────────────────────────────
+// 起動・タブ切替・状態管理
+// 起動時：前回キャッシュを即表示 → 裏で最新を取得して差し替え
+// ────────────────────────────────────────────────
+var APP = { state: null, hasFresh: false };
+
+function renderAll() {
+  if (!APP.state) return;
+  renderDraw();
+  renderBracket();
+  renderMine();
+}
+
+function showTab(name) {
+  ['draw', 'bracket', 'mine'].forEach(function(t) {
+    document.getElementById('tab-' + t).style.display = (t === name) ? 'block' : 'none';
+    document.getElementById('tabbtn-' + t).classList.toggle('active', t === name);
+  });
+  if (name === 'bracket') setTimeout(drawConnectors, 30);
+  window.scrollTo(0, 0);
+}
+
+function refreshState(cb) {
+  apiCall('state', null, function(d) {
+    APP.state = d;
+    APP.hasFresh = true;
+    saveCache('state', d);
+    renderAll();
+    setDataStatus('');
+    if (cb) cb(true);
+  }, function() {
+    var cached = loadCache('state');
+    if (cached) {
+      setDataStatus('オフライン（最終更新 ' + fmtCacheTime(cached.t) + '）');
+    } else {
+      setDataStatus('データを取得できませんでした。🔄 で再試行してください');
+    }
+    if (cb) cb(false);
+  });
+}
+
+function onRefresh() {
+  var btn = document.getElementById('refreshBtn');
+  btn.classList.add('spin');
+  refreshState(function() { btn.classList.remove('spin'); });
+}
+
+(function boot() {
+  var cached = loadCache('state');
+  if (cached) {
+    APP.state = cached.d;
+    renderAll();
+    setDataStatus('前回データを表示中（' + fmtCacheTime(cached.t) + '）… 更新しています');
+  }
+  refreshState();
+  window.addEventListener('resize', function() { drawConnectors(); });
+})();
+</script>
+
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', function(){
+    navigator.serviceWorker.register('./sw.js').catch(function(){});
+  });
+}
+</script>
+</body>
+</html>
