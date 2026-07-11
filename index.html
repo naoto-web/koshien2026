@@ -16,25 +16,34 @@
   * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
   html, body { height: 100%; }
   body {
-    background: linear-gradient(180deg, #1a2026 0%, #0b0e11 30%, #06080a 100%);
+    background:
+      radial-gradient(1100px 520px at 50% -12%, rgba(253, 224, 71, .10), transparent 62%),
+      radial-gradient(720px 400px at 88% 6%, rgba(96, 165, 250, .06), transparent 70%),
+      radial-gradient(600px 360px at 8% 14%, rgba(248, 113, 113, .05), transparent 70%),
+      linear-gradient(180deg, #171d24 0%, #0b0e11 36%, #06080a 100%);
+    background-attachment: fixed;
     color: #e8ecf1;
     font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Yu Gothic UI", "Meiryo", sans-serif;
     line-height: 1.6;
-    padding-bottom: 76px; /* 下タブぶん */
+    padding-bottom: calc(108px + env(safe-area-inset-bottom)); /* 固定タブに最後のカードが隠れない余白 */
   }
   button { font-family: inherit; cursor: pointer; }
 
   /* ── ヘッダー（スコアボード風） ── */
   .app-head {
     position: sticky; top: 0; z-index: 50;
-    background: linear-gradient(180deg, #14181d, #0a0d10);
+    background: linear-gradient(180deg, #161b21, #0a0d10);
     border-bottom: 2px solid #fde047;
-    padding: 10px 14px 8px;
+    box-shadow: 0 4px 18px rgba(253, 224, 71, .12);
+    padding: 11px 14px 9px;
   }
   .head-row { display: flex; align-items: center; justify-content: space-between; max-width: 720px; margin: 0 auto; }
-  .app-head h1 { font-size: 1.25rem; font-weight: 900; letter-spacing: .12em; color: #fff; }
-  .head-year { color: #fde047; margin-left: 6px; letter-spacing: .06em; }
-  .head-natsu { color: #f87171; margin-left: 4px; }
+  .app-head h1 {
+    font-size: 1.3rem; font-weight: 900; letter-spacing: .14em; color: #fff;
+    text-shadow: 0 0 16px rgba(255, 255, 255, .18);
+  }
+  .head-year { color: #fde047; margin-left: 6px; letter-spacing: .06em; text-shadow: 0 0 18px rgba(253, 224, 71, .55); }
+  .head-natsu { color: #f87171; margin-left: 4px; text-shadow: 0 0 14px rgba(248, 113, 113, .5); }
   .refresh-btn {
     background: #1c232a; border: 1px solid #333d47; color: #e8ecf1;
     border-radius: 10px; font-size: 1rem; padding: 6px 12px;
@@ -48,42 +57,58 @@
 
   main { max-width: 720px; margin: 0 auto; padding: 14px 12px; }
 
+  /* タブ切替時のふわっと表示 */
+  .tab-page { animation: fadeUp .3s ease; }
+  @keyframes fadeUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+
   /* ── 共通パネル ── */
   .panel {
-    background: #12161b; border: 1px solid #232b33; border-radius: 14px;
+    background: linear-gradient(170deg, #141a21, #0e1318);
+    border: 1px solid #26303b; border-radius: 16px;
+    box-shadow: 0 8px 26px rgba(0, 0, 0, .38);
     padding: 16px 14px; margin-bottom: 14px;
   }
-  .panel-title { font-size: 1.05rem; font-weight: 800; margin-bottom: 8px; }
+  .panel-title { font-size: 1.05rem; font-weight: 800; margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
+  .panel-title::before {
+    content: ''; width: 5px; height: 18px; border-radius: 3px; flex: none;
+    background: linear-gradient(180deg, #fde047, #f59e0b);
+    box-shadow: 0 0 10px rgba(253, 224, 71, .5);
+  }
   .panel-note { font-size: .88rem; color: #9aa7b4; }
   .panel-note strong { color: #fde047; }
+  .rem-count { font-size: .78rem; color: #fde047; font-weight: 700; margin-left: auto; }
 
   /* ── くじ引き ── */
   .draw-label { text-align: center; font-size: .9rem; color: #c7d0d9; margin: 14px 0 10px; }
   .player-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
   .player-btn {
-    background: #1a222b; border: 1px solid #2c3742; color: #fff;
-    border-radius: 12px; padding: 14px 8px; font-size: 1.05rem; font-weight: 700;
+    background: linear-gradient(160deg, #1d2733, #131a22);
+    border: 1px solid #2c3742; border-left: 5px solid var(--mc, #3b82f6);
+    color: #fff; border-radius: 13px; padding: 15px 8px;
+    font-size: 1.08rem; font-weight: 800;
     display: flex; flex-direction: column; align-items: center; gap: 2px;
-    transition: transform .1s ease;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, .3);
+    transition: transform .1s ease, box-shadow .2s ease;
   }
-  .player-btn:active { transform: scale(.96); }
+  .player-btn:not(.drawn):active { transform: scale(.95); box-shadow: 0 0 18px rgba(253, 224, 71, .25); }
   .player-btn .btn-status { font-size: .72rem; color: #8bd48b; font-weight: 600; }
   .player-btn.drawn { opacity: .45; cursor: default; }
   .confirm-box { text-align: center; padding: 10px 0 4px; }
-  .confirm-who { font-size: 1.4rem; font-weight: 900; color: #fde047; }
+  .confirm-who { font-size: 1.5rem; font-weight: 900; color: #fde047; text-shadow: 0 0 16px rgba(253, 224, 71, .45); }
   .confirm-note { font-size: .85rem; color: #9aa7b4; margin: 6px 0 12px; }
   .confirm-btns { display: flex; gap: 10px; justify-content: center; }
   .btn-main {
     background: linear-gradient(180deg, #fde047, #eab308); color: #1c1c05;
     border: none; border-radius: 12px; font-size: 1.02rem; font-weight: 900;
-    padding: 12px 26px; box-shadow: 0 4px 14px rgba(234, 179, 8, .35);
+    padding: 12px 26px; box-shadow: 0 4px 18px rgba(234, 179, 8, .45);
   }
   .btn-main:active { transform: scale(.97); }
   .btn-sub {
     background: #1a222b; border: 1px solid #2c3742; color: #c7d0d9;
     border-radius: 12px; font-size: .95rem; padding: 12px 20px;
   }
-  .loading-msg { text-align: center; color: #fde047; font-weight: 700; padding: 12px 0; }
+  .loading-msg { text-align: center; color: #fde047; font-weight: 700; padding: 12px 0; animation: pulseText 1s ease-in-out infinite; }
+  @keyframes pulseText { 50% { opacity: .45; } }
   .error-msg {
     background: #2a1215; border: 1px solid #7f1d1d; color: #fca5a5;
     border-radius: 10px; padding: 10px 12px; font-size: .86rem; margin-top: 12px;
@@ -92,25 +117,26 @@
   /* ── ガチャモーダル ── */
   .gacha-modal {
     display: none; position: fixed; inset: 0; z-index: 100;
-    background: rgba(3, 5, 8, .96); overflow-y: auto;
+    background: radial-gradient(900px 500px at 50% 0%, rgba(253, 224, 71, .08), transparent 60%), rgba(3, 5, 8, .97);
+    overflow-y: auto;
   }
   .gacha-modal.open { display: block; }
-  .gacha-inner { max-width: 560px; margin: 0 auto; padding: 22px 14px 40px; }
-  .gacha-header { text-align: center; font-size: 1.15rem; font-weight: 900; margin-bottom: 4px; }
+  .gacha-inner { max-width: 560px; margin: 0 auto; padding: 22px 14px 64px; }
+  .gacha-header { text-align: center; font-size: 1.2rem; font-weight: 900; margin-bottom: 4px; text-shadow: 0 0 14px rgba(255,255,255,.2); }
   .gacha-hint { text-align: center; font-size: .8rem; color: #9aa7b4; min-height: 1.3em; margin-bottom: 14px; }
   .gacha-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
 
-  .gcard {
-    position: relative; aspect-ratio: 3 / 4; border-radius: 12px;
-    perspective: 700px; opacity: .55;
-  }
-  .gcard.next { opacity: 1; }
-  .gcard.flipped { opacity: 1; }
+  .gcard { position: relative; aspect-ratio: 3 / 4; border-radius: 12px; perspective: 700px; opacity: .55; }
+  .gcard.next, .gcard.flipped { opacity: 1; }
   .gcard-in {
     position: absolute; inset: 0; transform-style: preserve-3d;
     transition: transform .55s cubic-bezier(.2, .7, .3, 1.1);
   }
   .gcard.flipped .gcard-in { transform: rotateY(180deg); }
+  .gcard.flipped { animation: pop .5s cubic-bezier(.2, .8, .3, 1.35); }
+  .gcard.flipped.rar-ssr { animation: popBig .7s cubic-bezier(.2, .8, .3, 1.35); }
+  @keyframes pop { 45% { transform: scale(1.1); } 100% { transform: scale(1); } }
+  @keyframes popBig { 40% { transform: scale(1.22) rotate(-2deg); } 70% { transform: scale(.97); } 100% { transform: scale(1); } }
   .gface {
     position: absolute; inset: 0; backface-visibility: hidden;
     border-radius: 12px; display: flex; flex-direction: column;
@@ -127,9 +153,14 @@
   }
   @keyframes beckon { 50% { transform: translateY(-3px); } }
   .gcard.charging .gface-back {
-    border-color: #fde047; color: #fff;
-    animation: charge .18s linear infinite;
-    box-shadow: 0 0 26px rgba(253, 224, 71, .9), 0 0 60px rgba(253, 224, 71, .5);
+    border: 2px solid #fde047; color: #fff;
+    animation: charge .16s linear infinite;
+    box-shadow: 0 0 28px rgba(253, 224, 71, .95), 0 0 70px rgba(253, 224, 71, .55);
+  }
+  .gcard.charging-sr .gface-back {
+    border: 2px solid #c084fc; color: #fff;
+    animation: charge .22s linear infinite;
+    box-shadow: 0 0 22px rgba(192, 132, 252, .85), 0 0 50px rgba(192, 132, 252, .4);
   }
   @keyframes charge {
     0% { transform: translate(-2px, 1px); } 25% { transform: translate(2px, -1px); }
@@ -143,39 +174,69 @@
 
   .gcard.rar-ssr .gface-front {
     border: 2px solid #fde047;
-    background: linear-gradient(160deg, #2b2410, #171307);
-    box-shadow: 0 0 18px rgba(253, 224, 71, .55);
+    background:
+      radial-gradient(120px 90px at 50% 0%, rgba(253, 224, 71, .28), transparent 70%),
+      linear-gradient(160deg, #2f2810, #171307);
+    box-shadow: 0 0 22px rgba(253, 224, 71, .65), 0 0 60px rgba(253, 224, 71, .25);
   }
   .gcard.rar-sr .gface-front {
     border: 2px solid #c084fc;
-    background: linear-gradient(160deg, #241a33, #130d1c);
-    box-shadow: 0 0 12px rgba(192, 132, 252, .4);
+    background:
+      radial-gradient(120px 90px at 50% 0%, rgba(192, 132, 252, .24), transparent 70%),
+      linear-gradient(160deg, #271c38, #130d1c);
+    box-shadow: 0 0 16px rgba(192, 132, 252, .55);
   }
-  .gcard.rar-r .gface-front { border: 1px solid #60a5fa; background: linear-gradient(160deg, #16202e, #0e141d); }
+  .gcard.rar-r .gface-front {
+    border: 1px solid #60a5fa;
+    background: linear-gradient(160deg, #17263a, #0e141d);
+    box-shadow: 0 0 12px rgba(96, 165, 250, .35);
+  }
 
   .gacha-close { display: block; margin: 22px auto 0; }
   .carry-notice {
     margin-top: 18px; background: #12161b; border: 1px dashed #3a4652;
-    border-radius: 12px; padding: 12px;
+    border-radius: 12px; padding: 12px; animation: fadeUp .5s ease;
   }
   .carry-title { font-weight: 800; font-size: .9rem; margin-bottom: 6px; }
   .carry-chips { display: flex; flex-wrap: wrap; gap: 6px; }
   .carry-note { font-size: .74rem; color: #9aa7b4; margin-top: 6px; }
+
+  /* 演出パーツ：スプラッシュ文字とパーティクル */
+  .splash {
+    position: fixed; top: 38%; left: 50%; z-index: 10000; pointer-events: none;
+    font-weight: 900; letter-spacing: .1em; text-align: center; white-space: nowrap;
+    animation: splashPop 1.15s ease forwards;
+  }
+  .splash-ssr { font-size: 3.4rem; color: #fde047; text-shadow: 0 0 24px rgba(253, 224, 71, .95), 0 0 70px rgba(253, 224, 71, .55); }
+  .splash-sr  { font-size: 2.4rem; color: #d8b4fe; text-shadow: 0 0 20px rgba(192, 132, 252, .9), 0 0 50px rgba(192, 132, 252, .45); }
+  @keyframes splashPop {
+    0%   { opacity: 0; transform: translate(-50%, -50%) scale(.25); }
+    22%  { opacity: 1; transform: translate(-50%, -50%) scale(1.2); }
+    42%  { transform: translate(-50%, -50%) scale(1); }
+    75%  { opacity: 1; }
+    100% { opacity: 0; transform: translate(-50%, -64%) scale(1); }
+  }
+  .pt {
+    position: fixed; width: 9px; height: 9px; border-radius: 50%;
+    pointer-events: none; z-index: 9999; opacity: 1;
+    transition: transform .8s cubic-bezier(.1, .6, .3, 1), opacity .8s ease;
+    box-shadow: 0 0 8px currentColor;
+  }
 
   /* ── レア度バッジ ── */
   .rb {
     display: inline-block; font-size: .62rem; font-weight: 900;
     border-radius: 6px; padding: 1px 7px; letter-spacing: .05em;
   }
-  .rb-ssr { background: linear-gradient(90deg, #fde047, #f59e0b); color: #201a02; }
-  .rb-sr  { background: #a855f7; color: #fff; }
-  .rb-r   { background: #3b82f6; color: #fff; }
+  .rb-ssr { background: linear-gradient(90deg, #fde047, #f59e0b); color: #201a02; box-shadow: 0 0 8px rgba(253, 224, 71, .5); }
+  .rb-sr  { background: linear-gradient(90deg, #c084fc, #9333ea); color: #fff; box-shadow: 0 0 7px rgba(192, 132, 252, .4); }
+  .rb-r   { background: linear-gradient(90deg, #60a5fa, #2563eb); color: #fff; }
   .rb-n   { background: #2b333c; color: #93a1af; }
 
   /* ── 凡例 ── */
   .legend { display: flex; flex-wrap: wrap; gap: 8px 12px; margin-bottom: 12px; }
   .legend-item { display: flex; align-items: center; gap: 5px; font-size: .78rem; color: #c7d0d9; }
-  .legend-dot { width: 10px; height: 10px; border-radius: 3px; flex: none; }
+  .legend-dot { width: 10px; height: 10px; border-radius: 3px; flex: none; box-shadow: 0 0 6px currentColor; }
 
   /* ── ブラケット（3回戦までの山） ── */
   .bk-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; margin: 0 -12px; padding: 0 12px; }
@@ -185,12 +246,14 @@
   .bk-col.spread { justify-content: space-around; }
   .bk-col-title {
     text-align: center; font-size: .78rem; font-weight: 800; color: #fde047;
-    letter-spacing: .1em; margin-bottom: 2px;
+    letter-spacing: .1em; margin-bottom: 2px; text-shadow: 0 0 10px rgba(253, 224, 71, .4);
   }
 
   .match {
-    background: #12161b; border: 1px solid #232b33; border-radius: 10px;
+    background: linear-gradient(170deg, #141a21, #0f1419);
+    border: 1px solid #26303b; border-radius: 10px;
     overflow: hidden; font-size: .8rem;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, .3);
   }
   .match-meta { font-size: .62rem; color: #7b8894; padding: 3px 8px 0; }
   .mrow { display: flex; align-items: center; gap: 6px; padding: 4px 8px; }
@@ -200,34 +263,54 @@
   .mrow .mpref { font-size: .62rem; color: #7b8894; flex: none; }
   .mrow .mscore { font-weight: 900; font-size: .92rem; width: 1.6em; text-align: right; flex: none; }
   .mrow.loser .mname, .mrow.loser .mscore { color: #5c6b7a; }
-  .mrow.winner .mscore { color: #fde047; }
+  .mrow.winner { background: linear-gradient(90deg, rgba(253, 224, 71, .07), transparent); }
+  .mrow.winner .mscore { color: #fde047; text-shadow: 0 0 8px rgba(253, 224, 71, .5); }
   .mrow.tbd .mname { color: #5c6b7a; font-weight: 500; font-size: .72rem; }
 
   /* ── 終盤（準々決勝以降のカード） ── */
   .finals-sec { margin-top: 18px; }
-  .finals-title { font-size: .9rem; font-weight: 800; color: #fde047; letter-spacing: .08em; margin-bottom: 8px; }
+  .finals-title {
+    font-size: .9rem; font-weight: 800; color: #fde047; letter-spacing: .08em;
+    margin-bottom: 8px; text-shadow: 0 0 10px rgba(253, 224, 71, .4);
+  }
   .finals-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
   .finals-grid.single { grid-template-columns: 1fr; max-width: 340px; }
   .finals-wait { font-size: .78rem; color: #7b8894; background: #10141a; border: 1px dashed #2c3742; border-radius: 10px; padding: 10px 12px; }
 
   /* ── 持ち校一覧 ── */
   .champ-banner {
-    background: linear-gradient(160deg, #2b2410, #171307); border: 2px solid #fde047;
-    border-radius: 14px; padding: 14px; text-align: center; margin-bottom: 14px;
-    font-weight: 900; font-size: 1.05rem;
+    position: relative; overflow: hidden;
+    background:
+      radial-gradient(300px 120px at 50% 0%, rgba(253, 224, 71, .22), transparent 70%),
+      linear-gradient(160deg, #2f2810, #171307);
+    border: 2px solid #fde047;
+    border-radius: 14px; padding: 15px; text-align: center; margin-bottom: 14px;
+    font-weight: 900; font-size: 1.1rem;
+    box-shadow: 0 0 26px rgba(253, 224, 71, .3);
   }
-  .champ-banner .champ-sub { display: block; font-size: .78rem; color: #c9b45a; font-weight: 600; margin-top: 2px; }
+  .champ-banner::after {
+    content: ''; position: absolute; top: 0; left: -60%; width: 40%; height: 100%;
+    background: linear-gradient(100deg, transparent, rgba(255, 255, 255, .2), transparent);
+    animation: shine 2.6s ease-in-out infinite;
+  }
+  @keyframes shine { 0% { left: -60%; } 60% { left: 120%; } 100% { left: 120%; } }
+  .champ-banner .champ-sub { display: block; font-size: .8rem; color: #d9c464; font-weight: 700; margin-top: 2px; }
+
   .mine-card {
-    background: #12161b; border: 1px solid #232b33; border-radius: 14px;
-    padding: 12px 12px 10px; margin-bottom: 12px;
+    background: linear-gradient(170deg, #141a21, #0e1318);
+    border: 1px solid #26303b; border-radius: 14px;
+    padding: 12px 12px 12px; margin-bottom: 12px;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, .3);
   }
-  .mine-card.me { border-color: #fde047; }
-  .mine-head { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
-  .mine-dot { width: 12px; height: 12px; border-radius: 4px; flex: none; }
-  .mine-name { font-weight: 900; font-size: 1rem; }
+  .mine-card.me { border-color: #fde047; box-shadow: 0 0 18px rgba(253, 224, 71, .18); }
+  .mine-head { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; flex-wrap: wrap; }
+  .mine-dot { width: 12px; height: 12px; border-radius: 4px; flex: none; box-shadow: 0 0 8px currentColor; }
+  .mine-name { font-weight: 900; font-size: 1.02rem; }
   .mine-me-badge { font-size: .62rem; background: #fde047; color: #201a02; font-weight: 900; border-radius: 6px; padding: 1px 6px; }
   .mine-alive { margin-left: auto; font-size: .78rem; color: #9aa7b4; }
-  .mine-alive strong { color: #fde047; font-size: .95rem; }
+  .mine-alive strong { color: #fde047; font-size: .98rem; text-shadow: 0 0 8px rgba(253, 224, 71, .4); }
+  .alive-bar { height: 6px; background: #1b232c; border-radius: 4px; overflow: hidden; margin-bottom: 9px; }
+  .alive-fill { height: 100%; border-radius: 4px; transition: width .6s ease; box-shadow: 0 0 8px currentColor; }
   .school-chips { display: flex; flex-wrap: wrap; gap: 6px; }
   .schip {
     display: inline-flex; align-items: center; gap: 5px;
@@ -235,23 +318,31 @@
     padding: 3px 8px; font-size: .78rem; font-weight: 700;
   }
   .schip .schip-pref { font-size: .62rem; color: #7b8894; font-weight: 500; }
-  .schip.out { opacity: .42; }
+  .schip.out { opacity: .4; }
   .schip.out .schip-name { text-decoration: line-through; }
   .mine-empty { font-size: .8rem; color: #7b8894; }
 
   /* ── 下タブ ── */
   .tab-bar {
     position: fixed; left: 0; right: 0; bottom: 0; z-index: 60;
-    display: flex; background: #0c0f13; border-top: 1px solid #232b33;
+    display: flex; background: rgba(10, 13, 17, .96);
+    backdrop-filter: blur(8px);
+    border-top: 1px solid #232b33;
     padding-bottom: env(safe-area-inset-bottom);
   }
   .tab-btn {
-    flex: 1; background: none; border: none; color: #7b8894;
-    font-size: .72rem; font-weight: 700; padding: 8px 0 9px;
+    position: relative; flex: 1; background: none; border: none; color: #7b8894;
+    font-size: .72rem; font-weight: 700; padding: 9px 0 10px;
     display: flex; flex-direction: column; align-items: center; gap: 1px;
+    transition: color .15s ease;
   }
-  .tab-btn .tab-ico { font-size: 1.15rem; }
+  .tab-btn .tab-ico { font-size: 1.2rem; }
   .tab-btn.active { color: #fde047; }
+  .tab-btn.active::before {
+    content: ''; position: absolute; top: 0; left: 50%; transform: translateX(-50%);
+    width: 30px; height: 3px; border-radius: 2px;
+    background: #fde047; box-shadow: 0 0 10px rgba(253, 224, 71, .7);
+  }
 </style>
 
 </head>
@@ -284,6 +375,10 @@
         </div>
         <div id="loadingMsg" class="loading-msg" style="display:none;">⚾ 抽選中…</div>
         <div id="errorMsg" class="error-msg" style="display:none;"></div>
+      </div>
+      <div class="panel">
+        <div class="panel-title">🏫 残りの学校（北から）<span id="remCount" class="rem-count"></span></div>
+        <div id="remainingList" class="school-chips"></div>
       </div>
     </section>
 
@@ -420,18 +515,19 @@ function setDataStatus(text) {
 
   <script>
 // ────────────────────────────────────────────────
-// くじ引きタブ：名前選択 → 確認 → 抽選 → 1枚ずつタップでめくる
+// くじ引きタブ：名前選択 → 確認 → 抽選 → 連続自動でめくれる演出
+// レア度別演出：R=青フラッシュ＋粒 / SR=紫溜め＋スプラッシュ / SSR=金溜め＋大スプラッシュ
 // ────────────────────────────────────────────────
 var pendingName = '';
 var gachaTeams = [];
 var gachaCarried = [];
-var gachaNext = 0;
 
 function renderDraw() {
   var st = APP.state;
   if (!st) return;
   document.getElementById('remainingNum').textContent = st.remaining;
   renderPlayerButtons();
+  renderRemaining();
 }
 
 function renderPlayerButtons() {
@@ -444,15 +540,33 @@ function renderPlayerButtons() {
   var grid = document.getElementById('playerBtns');
   grid.innerHTML = MEMBERS.map(function(name) {
     var drew = st && st.drawn && st.drawn[name];
+    var style = ' style="--mc:' + ownerColor(name) + '"';
     if (drew) {
-      return '<button class="player-btn drawn" disabled>'
+      return '<button class="player-btn drawn"' + style + ' disabled>'
         + '<span class="btn-name">' + h(name) + '</span>'
         + '<span class="btn-status">引き済み ✓</span>'
         + '</button>';
     }
-    return '<button class="player-btn" onclick="onPlayerClick(' + h(JSON.stringify(name)) + ')">'
+    return '<button class="player-btn"' + style + ' onclick="onPlayerClick(' + h(JSON.stringify(name)) + ')">'
       + '<span class="btn-name">' + h(name) + '</span>'
       + '</button>';
+  }).join('');
+}
+
+// 残りの学校一覧（シート順＝北から順。レア度も公開）
+function renderRemaining() {
+  var st = APP.state;
+  var list = document.getElementById('remainingList');
+  var remaining = st.teams.filter(function(t) { return !t.owner; });
+  document.getElementById('remCount').textContent = 'あと' + remaining.length + '校';
+  if (!remaining.length) {
+    list.innerHTML = '<span class="mine-empty">全校の引き先が決まりました！</span>';
+    return;
+  }
+  list.innerHTML = remaining.map(function(t) {
+    return '<span class="schip">' + rarityBadge(t.rarity)
+      + '<span class="schip-name">' + h(t.name) + '</span>'
+      + '<span class="schip-pref">' + h(t.pref) + '</span></span>';
   }).join('');
 }
 
@@ -506,80 +620,90 @@ function handleDrawResult(name, r) {
   refreshState();
 }
 
-// ── ガチャ演出 ──────────────────────────────
+// ── ガチャ演出（連続自動公開） ──────────────────
 function openGacha(name, teams, carried) {
   gachaTeams = teams;
   gachaCarried = carried;
-  gachaNext = 0;
   window.scrollTo(0, 0);
 
   document.getElementById('gachaHeader').textContent = name + 'の9校';
-  document.getElementById('gachaHint').textContent = '光っているカードをタップ！';
+  document.getElementById('gachaHint').textContent = '結果発表…！';
   document.getElementById('gachaCarry').innerHTML = '';
   document.getElementById('gachaCloseBtn').style.display = 'none';
 
   var grid = document.getElementById('gachaGrid');
   grid.innerHTML = teams.map(function(_, i) {
-    return '<div class="gcard" id="gcard-' + i + '" onclick="onCardTap(' + i + ')">'
+    return '<div class="gcard" id="gcard-' + i + '">'
       + '<div class="gcard-in">'
       + '<div class="gface gface-back">⚾</div>'
       + '<div class="gface gface-front"></div>'
       + '</div></div>';
   }).join('');
   document.getElementById('gachaModal').classList.add('open');
-  markNextCard();
+
+  // タイムライン組み立て：レア度が高いカードほど「溜め」を長く、直後に間を置く
+  var t = 900;
+  teams.forEach(function(tm, i) {
+    var lead = tm.rarity === 'SSR' ? 1600 : (tm.rarity === 'SR' ? 1100 : 350);
+    (function(idx, rar, revealAt) {
+      setTimeout(function() { prepCard(idx, rar); }, Math.max(250, revealAt - lead));
+      setTimeout(function() { revealCard(idx); }, revealAt);
+    })(i, tm.rarity, t);
+    var gap = 1000 + i * 110;
+    if (tm.rarity === 'SSR') gap += 1000;
+    else if (tm.rarity === 'SR') gap += 500;
+    t += gap;
+  });
+  setTimeout(finishGacha, t + 300);
 }
 
-function markNextCard() {
-  for (var i = 0; i < gachaTeams.length; i++) {
-    var el = document.getElementById('gcard-' + i);
-    el.classList.toggle('next', i === gachaNext);
-  }
-}
-
-function onCardTap(i) {
-  if (i !== gachaNext) return;
+// めくる直前の予兆：SSR=金の激しい溜め / SR=紫の溜め / それ以外=黄色く光る
+function prepCard(i, rarity) {
   var card = document.getElementById('gcard-' + i);
-  if (card.classList.contains('flipped') || card.classList.contains('charging')) return;
-
-  var t = gachaTeams[i];
-  card.classList.remove('next');
-
-  if (t.rarity === 'SSR') {
-    // 溜め演出 → 金フラッシュ → 開示
+  if (!card) return;
+  if (rarity === 'SSR') {
     card.classList.add('charging');
     if (navigator.vibrate) navigator.vibrate([60, 40, 60, 40, 60]);
-    setTimeout(function() {
-      card.classList.remove('charging');
-      goldFlash();
-      if (navigator.vibrate) navigator.vibrate([120, 60, 260, 60, 500]);
-      revealCard(i);
-    }, 1400);
+  } else if (rarity === 'SR') {
+    card.classList.add('charging-sr');
+    if (navigator.vibrate) navigator.vibrate([50, 40, 50]);
   } else {
-    if (t.rarity === 'SR' && navigator.vibrate) navigator.vibrate([80, 40, 160]);
-    revealCard(i);
+    card.classList.add('next');
   }
 }
 
 function revealCard(i) {
   var t = gachaTeams[i];
   var card = document.getElementById('gcard-' + i);
+  if (!card) return;
+  card.classList.remove('next', 'charging', 'charging-sr');
+
   var front = card.querySelector('.gface-front');
   front.innerHTML = rarityBadge(t.rarity)
     + '<div class="gc-name">' + h(t.name) + '</div>'
     + '<div class="gc-pref">' + h(t.pref) + '</div>';
   card.classList.add('flipped', 'rar-' + String(t.rarity).toLowerCase());
 
-  gachaNext++;
-  if (gachaNext < gachaTeams.length) {
-    markNextCard();
-  } else {
-    document.getElementById('gachaHint').textContent = '';
-    finishGacha();
+  if (t.rarity === 'SSR') {
+    colorFlash('rgba(253,224,71,0.65)', 750);
+    setTimeout(function() { colorFlash('rgba(253,224,71,0.35)', 500); }, 220);
+    burst(card, ['#fde047', '#f59e0b', '#fff7cc'], 26);
+    splashText('★ SSR ★', 'splash-ssr');
+    if (navigator.vibrate) navigator.vibrate([120, 60, 260, 60, 500]);
+  } else if (t.rarity === 'SR') {
+    colorFlash('rgba(192,132,252,0.5)', 650);
+    burst(card, ['#c084fc', '#a855f7', '#f0e1ff'], 16);
+    splashText('SR!!', 'splash-sr');
+    if (navigator.vibrate) navigator.vibrate([90, 50, 200]);
+  } else if (t.rarity === 'R') {
+    colorFlash('rgba(96,165,250,0.4)', 500);
+    burst(card, ['#60a5fa', '#93c5fd'], 10);
+    if (navigator.vibrate) navigator.vibrate(45);
   }
 }
 
 function finishGacha() {
+  document.getElementById('gachaHint').textContent = '';
   if (gachaCarried.length > 0) {
     var chips = gachaCarried.map(function(t) {
       return '<span class="schip">' + rarityBadge(t.rarity) + '<span class="schip-name">' + h(t.name) + '</span>'
@@ -592,17 +716,51 @@ function finishGacha() {
       + '<div class="carry-note">キャリー校が優勝した場合は全員負けです</div>'
       + '</div>';
   }
-  setTimeout(function() {
-    document.getElementById('gachaCloseBtn').style.display = 'block';
-  }, 800);
+  document.getElementById('gachaCloseBtn').style.display = 'block';
 }
 
-function goldFlash() {
+// ── 演出ヘルパー ──────────────────────────────
+function colorFlash(rgba, dur) {
   var el = document.createElement('div');
-  el.style.cssText = 'position:fixed;inset:0;background:rgba(253,224,71,0.6);pointer-events:none;z-index:9999;opacity:1;transition:opacity 0.7s ease;';
+  el.style.cssText = 'position:fixed;inset:0;background:' + rgba + ';pointer-events:none;z-index:9998;opacity:1;transition:opacity ' + (dur / 1000) + 's ease;';
   document.body.appendChild(el);
-  setTimeout(function() { el.style.opacity = '0'; }, 80);
-  setTimeout(function() { el.remove(); }, 820);
+  setTimeout(function() { el.style.opacity = '0'; }, 60);
+  setTimeout(function() { el.remove(); }, dur + 120);
+}
+
+function burst(cardEl, colors, n) {
+  var r = cardEl.getBoundingClientRect();
+  var cx = r.left + r.width / 2;
+  var cy = r.top + r.height / 2;
+  for (var i = 0; i < n; i++) {
+    var p = document.createElement('div');
+    p.className = 'pt';
+    var c = colors[i % colors.length];
+    p.style.background = c;
+    p.style.color = c;
+    p.style.left = cx + 'px';
+    p.style.top = cy + 'px';
+    document.body.appendChild(p);
+    var ang = Math.random() * Math.PI * 2;
+    var dist = 60 + Math.random() * 110;
+    (function(el, dx, dy) {
+      requestAnimationFrame(function() {
+        requestAnimationFrame(function() {
+          el.style.transform = 'translate(' + dx + 'px,' + dy + 'px) scale(.15)';
+          el.style.opacity = '0';
+        });
+      });
+      setTimeout(function() { el.remove(); }, 900);
+    })(p, Math.cos(ang) * dist, Math.sin(ang) * dist);
+  }
+}
+
+function splashText(text, cls) {
+  var el = document.createElement('div');
+  el.className = 'splash ' + cls;
+  el.textContent = text;
+  document.body.appendChild(el);
+  setTimeout(function() { el.remove(); }, 1200);
 }
 
 function closeGacha() {
@@ -821,9 +979,10 @@ function renderMine() {
       + '<span class="mine-name">' + h(name) + '</span>'
       + (isMe ? '<span class="mine-me-badge">あなた</span>' : '');
 
+    var cardStyle = ' style="border-left:4px solid ' + ownerColor(name) + '"';
     if (!teams.length) {
       var note = (name === CARRY) ? '5人が引き終わると残り4校が入ります' : 'まだ引いていません';
-      return '<div class="mine-card' + (isMe ? ' me' : '') + '">' + head + '</div>'
+      return '<div class="mine-card' + (isMe ? ' me' : '') + '"' + cardStyle + '>' + head + '</div>'
         + '<div class="mine-empty">' + note + '</div></div>';
     }
 
@@ -842,7 +1001,12 @@ function renderMine() {
         + '</span>';
     }).join('');
 
-    return '<div class="mine-card' + (isMe ? ' me' : '') + '">' + head
+    var barColor = ownerColor(name);
+    var bar = '<div class="alive-bar"><div class="alive-fill" style="width:' + Math.round(alive / teams.length * 100)
+      + '%;background:' + barColor + ';color:' + barColor + '"></div></div>';
+
+    return '<div class="mine-card' + (isMe ? ' me' : '') + '"' + cardStyle + '>' + head
+      + bar
       + '<div class="school-chips">' + chips + '</div></div>';
   }).join('');
 }
