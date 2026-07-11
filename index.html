@@ -14,7 +14,8 @@
 <meta name="apple-mobile-web-app-title" content="甲子園2026夏">
   <style>
   * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-  html, body { height: 100%; }
+  html { height: 100%; }
+  body { min-height: 100%; } /* height:100%だと下余白が画面高基準になり、はみ出した最終行が固定タブに隠れる */
   body {
     background:
       radial-gradient(1100px 520px at 50% -12%, rgba(253, 224, 71, .10), transparent 62%),
@@ -25,7 +26,7 @@
     color: #e8ecf1;
     font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Yu Gothic UI", "Meiryo", sans-serif;
     line-height: 1.6;
-    padding-bottom: calc(108px + env(safe-area-inset-bottom)); /* 固定タブに最後のカードが隠れない余白 */
+    padding-bottom: calc(124px + env(safe-area-inset-bottom)); /* 固定タブに最後のカードが隠れない余白 */
   }
   button { font-family: inherit; cursor: pointer; }
 
@@ -156,11 +157,6 @@
     border: 2px solid #fde047; color: #fff;
     animation: charge .16s linear infinite;
     box-shadow: 0 0 28px rgba(253, 224, 71, .95), 0 0 70px rgba(253, 224, 71, .55);
-  }
-  .gcard.charging-sr .gface-back {
-    border: 2px solid #c084fc; color: #fff;
-    animation: charge .22s linear infinite;
-    box-shadow: 0 0 22px rgba(192, 132, 252, .85), 0 0 50px rgba(192, 132, 252, .4);
   }
   @keyframes charge {
     0% { transform: translate(-2px, 1px); } 25% { transform: translate(2px, -1px); }
@@ -303,7 +299,8 @@
     box-shadow: 0 4px 14px rgba(0, 0, 0, .3);
   }
   .mine-card.me { border-color: #fde047; box-shadow: 0 0 18px rgba(253, 224, 71, .18); }
-  .mine-head { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; flex-wrap: wrap; }
+  .mine-head { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; flex-wrap: wrap; cursor: pointer; }
+  .mine-hint { font-size: .74rem; color: #7b8894; margin-bottom: 10px; }
   .mine-dot { width: 12px; height: 12px; border-radius: 4px; flex: none; box-shadow: 0 0 8px currentColor; }
   .mine-name { font-weight: 900; font-size: 1.02rem; }
   .mine-me-badge { font-size: .62rem; background: #fde047; color: #201a02; font-weight: 900; border-radius: 6px; padding: 1px 6px; }
@@ -377,7 +374,7 @@
         <div id="errorMsg" class="error-msg" style="display:none;"></div>
       </div>
       <div class="panel">
-        <div class="panel-title">🏫 残りの学校（北から）<span id="remCount" class="rem-count"></span></div>
+        <div class="panel-title">🏫 残りの学校<span id="remCount" class="rem-count"></span></div>
         <div id="remainingList" class="school-chips"></div>
       </div>
     </section>
@@ -615,7 +612,6 @@ function handleDrawResult(name, r) {
     return;
   }
   hideError();
-  try { localStorage.setItem('koshien2026_me', name); } catch (e) {}
   openGacha(r.player, r.teams, r.carried || []);
   refreshState();
 }
@@ -657,16 +653,13 @@ function openGacha(name, teams, carried) {
   setTimeout(finishGacha, t + 300);
 }
 
-// めくる直前の予兆：SSR=金の激しい溜め / SR=紫の溜め / それ以外=黄色く光る
+// めくる直前の予兆：SSR/SR=金の激しい溜め（開くまでどちらかは分からない）/ それ以外=黄色く光る
 function prepCard(i, rarity) {
   var card = document.getElementById('gcard-' + i);
   if (!card) return;
-  if (rarity === 'SSR') {
+  if (rarity === 'SSR' || rarity === 'SR') {
     card.classList.add('charging');
     if (navigator.vibrate) navigator.vibrate([60, 40, 60, 40, 60]);
-  } else if (rarity === 'SR') {
-    card.classList.add('charging-sr');
-    if (navigator.vibrate) navigator.vibrate([50, 40, 50]);
   } else {
     card.classList.add('next');
   }
@@ -676,7 +669,7 @@ function revealCard(i) {
   var t = gachaTeams[i];
   var card = document.getElementById('gcard-' + i);
   if (!card) return;
-  card.classList.remove('next', 'charging', 'charging-sr');
+  card.classList.remove('next', 'charging');
 
   var front = card.querySelector('.gface-front');
   front.innerHTML = rarityBadge(t.rarity)
@@ -971,10 +964,13 @@ function renderMine() {
   try { me = localStorage.getItem('koshien2026_me') || ''; } catch (e) {}
 
   var names = MEMBERS.concat([CARRY]);
-  document.getElementById('mineList').innerHTML = names.map(function(name) {
+  document.getElementById('mineList').innerHTML =
+    '<div class="mine-hint">💡 名前の行をタップすると「あなた」マークを付けられます（この端末にだけ保存）</div>'
+    + names.map(function(name) {
     var teams = byOwner[name] || [];
     var isMe = name === me;
-    var head = '<div class="mine-head">'
+    var clickable = (name === CARRY) ? '' : ' onclick="toggleMe(' + h(JSON.stringify(name)) + ')"';
+    var head = '<div class="mine-head"' + clickable + '>'
       + '<span class="mine-dot" style="background:' + ownerColor(name) + '"></span>'
       + '<span class="mine-name">' + h(name) + '</span>'
       + (isMe ? '<span class="mine-me-badge">あなた</span>' : '');
@@ -1009,6 +1005,17 @@ function renderMine() {
       + bar
       + '<div class="school-chips">' + chips + '</div></div>';
   }).join('');
+}
+
+// 「あなた」マークの手動切替（くじを引いた端末≠本人の端末のことがあるため自動記憶はしない）
+function toggleMe(name) {
+  var me = '';
+  try { me = localStorage.getItem('koshien2026_me') || ''; } catch (e) {}
+  try {
+    if (me === name) localStorage.removeItem('koshien2026_me');
+    else localStorage.setItem('koshien2026_me', name);
+  } catch (e) {}
+  renderMine();
 }
 </script>
 
