@@ -299,8 +299,7 @@
     box-shadow: 0 4px 14px rgba(0, 0, 0, .3);
   }
   .mine-card.me { border-color: #fde047; box-shadow: 0 0 18px rgba(253, 224, 71, .18); }
-  .mine-head { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; flex-wrap: wrap; cursor: pointer; }
-  .mine-hint { font-size: .74rem; color: #7b8894; margin-bottom: 10px; }
+  .mine-head { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; flex-wrap: wrap; }
   .mine-dot { width: 12px; height: 12px; border-radius: 4px; flex: none; box-shadow: 0 0 8px currentColor; }
   .mine-name { font-weight: 900; font-size: 1.02rem; }
   .mine-me-badge { font-size: .62rem; background: #fde047; color: #201a02; font-weight: 900; border-radius: 6px; padding: 1px 6px; }
@@ -612,6 +611,7 @@ function handleDrawResult(name, r) {
     return;
   }
   hideError();
+  try { localStorage.setItem('koshien2026_me', name); } catch (e) {}
   openGacha(r.player, r.teams, r.carried || []);
   refreshState();
 }
@@ -964,13 +964,11 @@ function renderMine() {
   try { me = localStorage.getItem('koshien2026_me') || ''; } catch (e) {}
 
   var names = MEMBERS.concat([CARRY]);
-  document.getElementById('mineList').innerHTML =
-    '<div class="mine-hint">💡 名前の行をタップすると「あなた」マークを付けられます（この端末にだけ保存）</div>'
-    + names.map(function(name) {
+  document.getElementById('mineList').innerHTML = names.map(function(name) {
     var teams = byOwner[name] || [];
-    var isMe = name === me;
-    var clickable = (name === CARRY) ? '' : ' onclick="toggleMe(' + h(JSON.stringify(name)) + ')"';
-    var head = '<div class="mine-head"' + clickable + '>'
+    // 「あなた」＝この端末で最後にくじを引いた人。引く前（リセット後含む）は表示しない
+    var isMe = (name === me) && teams.length > 0;
+    var head = '<div class="mine-head">'
       + '<span class="mine-dot" style="background:' + ownerColor(name) + '"></span>'
       + '<span class="mine-name">' + h(name) + '</span>'
       + (isMe ? '<span class="mine-me-badge">あなた</span>' : '');
@@ -1005,17 +1003,6 @@ function renderMine() {
       + bar
       + '<div class="school-chips">' + chips + '</div></div>';
   }).join('');
-}
-
-// 「あなた」マークの手動切替（くじを引いた端末≠本人の端末のことがあるため自動記憶はしない）
-function toggleMe(name) {
-  var me = '';
-  try { me = localStorage.getItem('koshien2026_me') || ''; } catch (e) {}
-  try {
-    if (me === name) localStorage.removeItem('koshien2026_me');
-    else localStorage.setItem('koshien2026_me', name);
-  } catch (e) {}
-  renderMine();
 }
 </script>
 
