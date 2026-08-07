@@ -238,8 +238,9 @@
   .bk-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; margin: 0 -12px; padding: 0 12px; }
   .bk-tree { position: relative; display: flex; gap: 34px; width: max-content; padding: 6px 8px 18px; }
   .bk-svg { position: absolute; inset: 0; pointer-events: none; z-index: 0; }
-  .bk-col { display: flex; flex-direction: column; gap: 10px; z-index: 1; width: 168px; }
-  .bk-col.spread { justify-content: space-around; }
+  .bk-col { display: flex; flex-direction: column; gap: 6px; z-index: 1; width: 168px; }
+  /* タイトルは上に固定し、カード部だけを縦いっぱいに分散させる */
+  .bk-col-body { flex: 1; display: flex; flex-direction: column; justify-content: space-around; gap: 10px; }
   .bk-col-title {
     text-align: center; font-size: .78rem; font-weight: 800; color: #fde047;
     letter-spacing: .1em; margin-bottom: 2px; text-shadow: 0 0 10px rgba(253, 224, 71, .4);
@@ -264,6 +265,15 @@
   .mrow.tbd .mname { color: #5c6b7a; font-weight: 500; font-size: .72rem; }
 
   /* ── 終盤（準々決勝以降のカード） ── */
+  /* 中央カラム（準々決勝→準決勝→決勝の縦積み・両側の山の間） */
+  .bk-center {
+    display: flex; flex-direction: column; justify-content: center; gap: 22px;
+    width: 176px; z-index: 1; padding: 0 6px;
+  }
+  .bk-center-sec { display: flex; flex-direction: column; gap: 8px; }
+  .bk-center-sec.final .match { border-color: rgba(253, 224, 71, .45); }
+  .bk-center .finals-wait { text-align: center; }
+
   .finals-sec { margin-top: 18px; }
   .finals-title {
     font-size: .9rem; font-weight: 800; color: #fde047; letter-spacing: .08em;
@@ -387,7 +397,6 @@
           <svg id="bkSvg" class="bk-svg"></svg>
         </div>
       </div>
-      <div id="bkFinals"></div>
     </section>
 
     <!-- 持ち校一覧タブ -->
@@ -773,12 +782,16 @@ function hideError() { document.getElementById('errorMsg').style.display = 'none
 
   <script>
 // ────────────────────────────────────────────────
-// トーナメントタブ
-//  ・3回戦までは山型ツリー（横スクロール＋SVGの連結線）
-//  ・準々決勝以降は抽選確定後にカード表示（再抽選制度のため）
-//  ・校1/校2の「勝者N」は第N試合の勝者枠。勝者確定で校名に解決する
+// トーナメントタブ（両側収束レイアウト・2026-08-07改修）
+//  ・3回戦までの山を左右2ブロックに分け、W杯アプリ式に中央へ収束させる
+//    左＝3回戦前半の山（準々決勝Aブロック・17校）／右＝後半（Bブロック・32校）
+//    ブロック分けは「勝者N」参照を3回戦から遡って自動計算（ハードコードなし）
+//  ・中央カラムに準々決勝→準決勝→決勝を縦積み（抽選確定までは案内表示）
+//  ・校1/校2の「勝者N」は第N試合の勝者枠。シート上は勝者N表記のまま保ち、
+//    表示・連結線・ブロック計算はフロントで解決する
 // ────────────────────────────────────────────────
 var bkLinks = [];
+var bkSide = {};
 
 function teamInfo(name) {
   var st = APP.state;
@@ -857,43 +870,70 @@ function renderBracket() {
   var hasAny = st.matches.length > 0;
   document.getElementById('bkEmpty').style.display = hasAny ? 'none' : 'block';
   document.getElementById('bkScroll').style.display = hasAny ? 'block' : 'none';
-  document.getElementById('bkFinals').style.display = hasAny ? 'block' : 'none';
   if (!hasAny) return;
 
   bkLinks = [];
+  bkSide = {};
 
-  // 3回戦までの山
-  var tree = document.getElementById('bkTree');
-  var cols = '';
-  ['1回戦', '2回戦', '3回戦'].forEach(function(round, ri) {
-    var ms = st.matches.filter(function(m) { return m.round === round; });
-    if (!ms.length) return;
-    cols += '<div class="bk-col' + (ri > 0 ? ' spread' : '') + '">'
-      + '<div class="bk-col-title">' + h(round) + '</div>'
-      + ms.map(function(m) { return matchCardHtml(m, true); }).join('')
-      + '</div>';
+  // ブロック分け：3回戦の前半の山とその祖先＝左（L）、後半＝右（R）
+  var byNo = {};
+  st.matches.forEach(function(m) { byNo[String(m.no)] = m; });
+  function markSide(m, s) {
+    bkSide[String(m.no)] = s;
+    [m.t1, m.t2].forEach(function(t) {
+      var mm = String(t).match(/^勝者(\d+)$/);
+      if (mm && byNo[mm[1]]) markSide(byNo[mm[1]], s);
+    });
+  }
+  var r3 = st.matches.filter(function(m) { return m.round === '3回戦'; });
+  var half = Math.ceil(r3.length / 2);
+  r3.forEach(function(m, i) { markSide(m, i < half ? 'L' : 'R'); });
+  // 3回戦が無いデータでも壊れないように：未分類の山は全部左へ
+  st.matches.forEach(function(m) {
+    if (['1回戦', '2回戦', '3回戦'].indexOf(m.round) >= 0 && !bkSide[String(m.no)]) bkSide[String(m.no)] = 'L';
   });
-  tree.innerHTML = '<svg id="bkSvg" class="bk-svg"></svg>' + cols;
 
-  // 準々決勝以降（抽選確定後にカード追加）
-  var finals = [
-    { round: '準々決勝', wait: '3回戦終了後の抽選で組み合わせが決まります' },
-    { round: '準決勝',   wait: '準々決勝終了後の抽選で組み合わせが決まります' },
-    { round: '決勝',     wait: '準決勝の結果を待っています' }
+  var treeRounds = ['1回戦', '2回戦', '3回戦'];
+  function sideCols(s, reversed) {
+    var order = reversed ? treeRounds.slice().reverse() : treeRounds;
+    return order.map(function(round) {
+      var ms = st.matches.filter(function(m) { return m.round === round && bkSide[String(m.no)] === s; });
+      if (!ms.length) return '';
+      return '<div class="bk-col">'
+        + '<div class="bk-col-title">' + h(round) + '</div>'
+        + '<div class="bk-col-body">'
+        + ms.map(function(m) { return matchCardHtml(m, true); }).join('')
+        + '</div></div>';
+    }).join('');
+  }
+
+  // 中央カラム：準々決勝以降（再抽選で確定したらSetup.gs追記→ここに出る）
+  var finalsDefs = [
+    { round: '準々決勝', wait: '3回戦終了後の抽選で確定（8/16夜）' },
+    { round: '準決勝',   wait: '準々決勝終了後の抽選で確定（8/18）' },
+    { round: '決勝',     wait: '8/22 10:00' }
   ];
-  document.getElementById('bkFinals').innerHTML = finals.map(function(f) {
-    var ms = st.matches.filter(function(m) { return m.round === f.round; });
-    var body = ms.length
-      ? '<div class="finals-grid' + (ms.length === 1 ? ' single' : '') + '">'
-        + ms.map(function(m) { return matchCardHtml(m, false); }).join('') + '</div>'
-      : '<div class="finals-wait">' + h(f.wait) + '</div>';
-    return '<div class="finals-sec"><div class="finals-title">' + h(f.round) + '</div>' + body + '</div>';
-  }).join('');
+  var center = '<div class="bk-center">'
+    + finalsDefs.map(function(f) {
+        var ms = st.matches.filter(function(m) { return m.round === f.round; });
+        var body = ms.length
+          ? ms.map(function(m) { return matchCardHtml(m, false); }).join('')
+          : '<div class="finals-wait">' + h(f.wait) + '</div>';
+        return '<div class="bk-center-sec' + (f.round === '決勝' ? ' final' : '') + '">'
+          + '<div class="bk-col-title">' + (f.round === '決勝' ? '🏆 ' : '') + h(f.round) + '</div>'
+          + body + '</div>';
+      }).join('')
+    + '</div>';
+
+  var tree = document.getElementById('bkTree');
+  tree.innerHTML = '<svg id="bkSvg" class="bk-svg"></svg>'
+    + sideCols('L', false) + center + sideCols('R', true);
 
   requestAnimationFrame(drawConnectors);
 }
 
 // カード位置を測ってSVGで連結線を引く（.bk-tree が offsetParent になる）
+// 右ブロックは流れが右→左なので線の向きを反転する
 function drawConnectors() {
   var svg = document.getElementById('bkSvg');
   var tree = document.getElementById('bkTree');
@@ -906,9 +946,15 @@ function drawConnectors() {
     var a = document.getElementById('mk-' + l.from);
     var b = document.getElementById('mk-' + l.to);
     if (!a || !b) return;
-    var x1 = a.offsetLeft + a.offsetWidth;
+    var x1, x2;
+    if (bkSide[String(l.to)] === 'R') {
+      x1 = a.offsetLeft;
+      x2 = b.offsetLeft + b.offsetWidth;
+    } else {
+      x1 = a.offsetLeft + a.offsetWidth;
+      x2 = b.offsetLeft;
+    }
     var y1 = a.offsetTop + a.offsetHeight / 2;
-    var x2 = b.offsetLeft;
     var y2 = b.offsetTop + b.offsetHeight / 2;
     var mx = (x1 + x2) / 2;
     paths += '<path d="M' + x1 + ' ' + y1 + ' C' + mx + ' ' + y1 + ',' + mx + ' ' + y2 + ',' + x2 + ' ' + y2
