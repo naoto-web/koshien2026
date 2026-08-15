@@ -975,11 +975,22 @@ function renderMine() {
   if (!st) return;
 
   // 敗退校の集合（勝者が入った試合の負け側）
+  // ⚠️ 2回戦以降の枠はシート上「勝者N」表記のままなので、必ず実名へ解決してから
+  //    負け側を拾う。ここを素の t1/t2 で比較すると、勝者N枠で負けた校が永久に
+  //    生き残り扱いになる（2026-08-15に発覚・勝ち残り数が全員多く出ていた）
+  var winnerByNo = {};
+  st.matches.forEach(function(m) { if (m.winner) winnerByNo[String(m.no)] = m.winner; });
+  function nameOf(v) {
+    var mm = String(v).match(/^勝者(\d+)$/);
+    return mm ? (winnerByNo[mm[1]] || '') : String(v);
+  }
+
   var out = {};
   st.matches.forEach(function(m) {
     if (!m.winner) return;
-    var loser = (m.winner === m.t1) ? m.t2 : (m.winner === m.t2 ? m.t1 : '');
-    if (loser && !/^勝者\d+$/.test(loser)) out[loser] = true;
+    var a = nameOf(m.t1), b = nameOf(m.t2);
+    var loser = (m.winner === a) ? b : (m.winner === b ? a : '');
+    if (loser) out[loser] = true;
   });
 
   // 優勝バナー
